@@ -81,3 +81,12 @@ CREATE Table Likes(
     Foreign Key (user_id) REFERENCES Users(user_id),
     Foreign Key (track_id) REFERENCES Tracks(track_id)
 );
+
+ALTER Table `Users` ADD u_plan VARCHAR(10) NOT NULL DEFAULT "regular";
+
+CREATE Table Premium_Feature(
+    premium_feature_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(10) 
+);
+
+INSERT INTO Premium_Feature (name) VALUES ('Ad-free listening');
