@@ -18,4 +18,3 @@ JOIN `Playlists` on `Users`.user_id = `Playlists`.user_id
 JOIN `Playlist_Tracks` ON `Playlists`.playlist_id = `Playlist_Tracks`.playlist_id
 JOIN `Tracks` on `Playlist_Tracks`.track_id = `Tracks`.track_id;
 
-
