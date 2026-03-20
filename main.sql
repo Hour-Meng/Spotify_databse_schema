@@ -1,57 +1,61 @@
 # Write main code here
 create table Users(
-    user_id int PRIMARY KEY AUTO_INCREMENT,
-    u_name VARCHAR(50) NOT NULL,
-    u_gender CHAR(1),
-    u_password VARCHAR(100) NOT NULL,
-    u_email VARCHAR(50) NOT NULL UNIQUE,
-    u_country VARCHAR(50),
-    u_date_of_birth DATE,
-    u_profile_image BLOB,
-    u_created_at TIMESTAMP,
-    u_is_active BOOLEAN,
-    u_description TEXT
+    user_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    gender CHAR(1),
+    password CHAR(100) NOT NULL, --never store plain text password, use hashing and salting in real applications--
+    email VARCHAR(50) NOT NULL UNIQUE,
+    country VARCHAR(50),
+    date_of_birth DATE,
+    profile_image BYTEA,
+    created_at TIMESTAMP,
+    is_active BOOLEAN,
+    description TEXT
 );
-
 
 create Table Artists(
-    artist_id INT PRIMARY KEY AUTO_INCREMENT,
-    a_name VARCHAR(50) NOT NULL UNIQUE,
-    a_email VARCHAR(50) NOT NULL UNIQUE,
-    a_password VARCHAR(100) NOT NULL,
-    a_gender CHAR(1),
-    a_date_of_birth DATE,
-    a_country VARCHAR(50),
-    a_genre VARCHAR(50),
-    a_profile_image BLOB,
-
-    a_description TEXT
+    artist_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(50) NOT NULL UNIQUE,
+    password CHAR(100) NOT NULL,
+    gender CHAR(1),
+    date_of_birth DATE,
+    country VARCHAR(50),
+    genre VARCHAR(50),
+    profile_image BYTEA,
+    description TEXT
+);
+-- why this table? Because an artist can have multiple genres, an example would be from my favorite artist of all time "Post Malone"
+create TABLE Genres(
+    genre_id SERIAL PRIMARY KEY,
+    artist_id INT,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    Foreign Key (artist_id) REFERENCES Artists(artist_id)
 );
 
-
 create Table Albums(
-    album_id int PRIMARY KEY AUTO_INCREMENT,
-    album_name VARCHAR(50) NOT NULL,
-    album_image BLOB,
-    album_description TEXT,
+    album_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    image BYTEA,
+    description TEXT,
     artist_id INT,
     FOREIGN KEY (artist_id) REFERENCES Artists(artist_id)
   
 );
 
 create TABLE Tracks(
-    track_id INT PRIMARY KEY AUTO_INCREMENT,
-    t_name VARCHAR(50) NOT NULL,
-    t_length INT NOT NULL,
-    t_path VARCHAR(255),
+    track_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    duration_seconds INT NOT NULL,
     album_id INT,
     FOREIGN KEY (album_id) REFERENCES Albums(album_id)
 );
 
 CREATE TABLE Playlists(
-  playlist_id INT PRIMARY KEY AUTO_INCREMENT,
-  playlist_name VARCHAR(50) NOT NULL,
-  playlist_image BLOB,
+  playlist_id SERIAL PRIMARY KEY,
+  name VARCHAR(50) NOT NULL,
+  image BYTEA,
   user_id INT,
   FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
@@ -59,7 +63,7 @@ CREATE TABLE Playlists(
 CREATE TABLE Playlist_Tracks(
   playlist_id INT,
   track_id INT,
-  `Order` INT,
+  "order" INT,
   PRIMARY KEY (playlist_id, track_id),
   FOREIGN KEY (playlist_id) REFERENCES Playlists(playlist_id),
   FOREIGN KEY (track_id) REFERENCES Tracks(track_id)
@@ -76,22 +80,20 @@ CREATE Table Followers(
 CREATE Table Likes(
     user_id INT,
     track_id INT,
-    like_date_time DATETIME,
+    liked_at TIMESTAMP,
     PRIMARY KEY (user_id, track_id),
     Foreign Key (user_id) REFERENCES Users(user_id),
     Foreign Key (track_id) REFERENCES Tracks(track_id)
 );
 
 --to add a new column to the "users" table to store the user type(regular, premium)--
-ALTER Table `Users` ADD u_plan VARCHAR(10) NOT NULL DEFAULT "regular";
+ALTER Table Users 
+ADD COLUMN plan VARCHAR(10) NOT NULL DEFAULT 'regular';
 
 CREATE Table Premium_Feature(
-    premium_feature_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(10) 
+    premium_feature_id SERIAL PRIMARY KEY,
+    perk VARCHAR(50) DEFAULT 'Ad-free listening'
 );
-
--- to insert the premium user feaure into the "premium_feature" table--
-INSERT INTO Premium_Feature (name) VALUES ('Ad-free listening');
 
 create table Users_Premium_Feature(
     user_id int,
@@ -102,16 +104,16 @@ create table Users_Premium_Feature(
 );
 
 create table Payment(
-    payment_id int primary key AUTO_INCREMENT,
+    payment_id SERIAL PRIMARY KEY,
     user_id int not null,
     payment_method varchar(50) not null,
-    payment_data date not null,
+    paid_at date not null,
     amount decimal(10,2) not null,
     Foreign Key (user_id) REFERENCES Users(user_id)
 );
 
 create table Subscription_Plan (
-    subscription_plan_id int primary key AUTO_INCREMENT,
+    subscription_plan_id SERIAL PRIMARY KEY,
     name varchar(50) not null,
     price decimal(10,2) not null,
     description TEXT
@@ -126,17 +128,21 @@ VALUES
 create table User_Subscription_Plan (
     user_id int,
     subscription_plan_id int,
-    start_date DATE not null,
-    end_date DATE not null,
+    start_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    end_date TIMESTAMPTZ not null default (CURRENT_TIMESTAMP + INTERVAL '1 month'),
     primary key (user_id, subscription_plan_id),
     Foreign Key (user_id) REFERENCES Users(user_id),
-    Foreign Key (subscription_plan_id) REFERENCES Subscription_Plan(subscription_plan_id)
+    Foreign Key (subscription_plan_id) REFERENCES Subscription_Plan(subscription_plan_id),
+    CHECK (end_date > start_date)
 );
+-- test insert for user subscription plan
+INSERT INTO User_Subscription_Plan (user_id, subscription_plan_id)
+VALUES (1, 1);
 
 CREATE Table User_Tracks(
     user_id int,
     track_id int,
-    play_date DATE not null,
+    played_at DATE not null,
     play_count int default 1, --Number of time user played this track--
     primary key (user_id, track_id),
     Foreign Key (user_id) REFERENCES Users(user_id),
@@ -160,10 +166,23 @@ from user_tracks
 GROUP BY user_id, track_id;
 
 create table Notification (
-    notification_id int primary key AUTO_INCREMENT,
+    notification_id SERIAL primary key,
     user_id int not null,
     title varchar(100) not null,
     content varchar(255) not null,
-    creation_date DATE not null,
+    created_at TIMESTAMP not null DEFAULT CURRENT_TIMESTAMP,
     Foreign Key (user_id) REFERENCES Users(user_id)
-)
+);
+
+-- control the music quality
+-- this is not a junction table
+create table Track_Files(
+    file_id SERIAL PRIMARY KEY,
+    track_id int,
+    file_path VARCHAR(255) not null,
+    bitrate int not null, -- I'm calling it birtate instead of quality because bitrate tell you in kps
+    format varchar(20) not null,
+    file_size int,
+    Foreign Key (track_id) REFERENCES Tracks(track_id)
+);
+
