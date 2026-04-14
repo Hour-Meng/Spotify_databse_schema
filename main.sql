@@ -34,6 +34,14 @@ create TABLE Genres(
     Foreign Key (artist_id) REFERENCES Artists(artist_id)
 );
 
+CREATE Table Artist_Genre(
+    artist_id INT,
+    genre_id INT,
+    Foreign Key (artist_id) REFERENCES Artists(artist_id),
+    Foreign Key (genre_id) REFERENCES Genres(genre_id)
+);
+
+
 create Table Albums(
     album_id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
@@ -140,11 +148,10 @@ INSERT INTO User_Subscription_Plan (user_id, subscription_plan_id)
 VALUES (1, 1);
 
 CREATE Table User_Tracks(
+    play_id SERIAL PRIMARY KEY,
     user_id int,
     track_id int,
-    played_at DATE not null,
-    play_count int default 1, --Number of time user played this track--
-    primary key (user_id, track_id),
+    played_at TIMESTAMP not null,
     Foreign Key (user_id) REFERENCES Users(user_id),
     Foreign Key (track_id) REFERENCES Tracks(track_id)
 );
@@ -157,13 +164,6 @@ CREATE Table Similarity (
     Foreign Key (user_id) REFERENCES Users(user_id),
     Foreign Key (track_id) REFERENCES Tracks(track_id)
 );
-
---To calculate the similarity between tracks and users
-INSERT into similarity (user_id, track_id, similarity_score)
-select user_id, track_id,
-    (SUM(play_count) / (SQRT(SUM(play_count) * SUM(play_count))))
-from user_tracks
-GROUP BY user_id, track_id;
 
 create table Notification (
     notification_id SERIAL primary key,
@@ -185,4 +185,3 @@ create table Track_Files(
     file_size int,
     Foreign Key (track_id) REFERENCES Tracks(track_id)
 );
-
